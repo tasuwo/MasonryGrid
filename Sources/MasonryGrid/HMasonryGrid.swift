@@ -4,7 +4,7 @@
 
 import SwiftUI
 
-public struct MasonryGrid<Data, Content>: View where Data: Identifiable & Hashable, Content: View {
+public struct HMasonryGrid<Data, Content>: View where Data: Identifiable & Hashable, Content: View {
     @State private var availableWidth: CGFloat = 0
     @State private var contentWidths: [Data: CGFloat] = [:]
 
@@ -55,7 +55,7 @@ public struct MasonryGrid<Data, Content>: View where Data: Identifiable & Hashab
     }
 }
 
-extension MasonryGrid {
+extension HMasonryGrid {
     private func calcRows() -> [[Data]] {
         var rows: [[Data]] = [[]]
         var currentRow = 0
@@ -142,7 +142,7 @@ extension MasonryGrid {
         var body: some View {
             VStack {
                 ScrollView {
-                    MasonryGrid(tags) { tag in
+                    HMasonryGrid(tags) { tag in
                         ContentView.preferredWidth(name: tag.name, padding: 8)
                     } content: { tag in
                         ContentView(tag: tag)
