@@ -4,79 +4,66 @@
 
 import SwiftUI
 
-public struct HMasonryGrid<Data, Content>: View where Data: Identifiable & Hashable, Content: View {
-    @State private var availableWidth: CGFloat = 0
-    @State private var widths: [Data: CGFloat] = [:]
+public struct VMasonryGrid<Data, Content>: View where Data: Identifiable & Hashable, Content: View {
+    @State private var heights: [Data: CGFloat] = [:]
 
     @Environment(\.dynamicTypeSize) var dynamicTypeSize
 
-    private var data: [Data]
-    private let width: (Data) -> CGFloat
+    private let data: [Data]
+    private let numberOfColumns: Int
+    private let height: (Data) -> CGFloat
     private let content: (Data) -> Content
-    private let lineSpacing: CGFloat
+    private let columnSpacing: CGFloat
     private let contentSpacing: CGFloat
 
     public init(_ data: [Data],
-                lineSpacing: CGFloat = 8,
+                numberOfColumns: Int,
+                columnSpacing: CGFloat = 8,
                 contentSpacing: CGFloat = 8,
-                width: @escaping (Data) -> CGFloat,
+                height: @escaping (Data) -> CGFloat,
                 @ViewBuilder content: @escaping (Data) -> Content) {
         self.data = data
-        self.lineSpacing = lineSpacing
+        self.numberOfColumns = numberOfColumns
+        self.columnSpacing = columnSpacing
         self.contentSpacing = contentSpacing
-        self.width = width
+        self.height = height
         self.content = content
     }
 
     public var body: some View {
-        LazyVStack(alignment: .leading, spacing: lineSpacing) {
-            ForEach(calcRows(), id: \.self) { items in
-                LazyHStack(spacing: contentSpacing) {
+        HStack(alignment: .top, spacing: columnSpacing) {
+            ForEach(calcColumns(), id: \.self) { items in
+                LazyVStack(spacing: contentSpacing) {
                     ForEach(items) { item in
                         content(item)
-                            .frame(maxWidth: availableWidth)
                     }
                 }
             }
         }
-        .frame(minWidth: 0, maxWidth: .infinity, alignment: .leading)
-        .background(
-            Color.clear
-                .frame(height: 0)
-                .onChangeFrame { frame in
-                    widths = [:]
-                    availableWidth = frame.width
-                }
-        )
+        .frame(maxWidth: .infinity)
         .onChange(of: dynamicTypeSize) { _ in
-            widths = [:]
+            heights = [:]
         }
     }
 }
 
-extension HMasonryGrid {
-    private func calcRows() -> [[Data]] {
-        var rows: [[Data]] = [[]]
-        var currentRow = 0
-        var remainingWidth = availableWidth
+extension VMasonryGrid {
+    private func calcColumns() -> [[Data]] {
+        var contents: [[Data]] = [[Data]].init(repeating: [], count: numberOfColumns)
+        var yOffset = [CGFloat].init(repeating: 0, count: numberOfColumns)
 
-        for d in data {
-            let contentWidth: CGFloat = widths[d] ?? min(width(d), availableWidth)
-            if rows[currentRow].isEmpty {
-                rows[currentRow].append(d)
-                remainingWidth -= contentWidth
-            } else if remainingWidth - (contentWidth + contentSpacing) >= 0 {
-                rows[currentRow].append(d)
-                remainingWidth -= (contentWidth + contentSpacing)
-            } else {
-                currentRow += 1
-                rows.append([d])
-                remainingWidth = availableWidth
-                remainingWidth -= contentWidth
-            }
+        for (i, d) in data.enumerated() {
+            let contentHeight: CGFloat = heights[d] ?? height(d)
+
+            let column = yOffset.enumerated()
+                .min(by: { $0.element < $1.element })?
+                .offset ?? i % numberOfColumns
+
+            contents[column].append(d)
+            yOffset[column] += contentHeight
         }
 
-        return rows
+        return contents
     }
 }
 
@@ -87,7 +74,7 @@ extension HMasonryGrid {
         let red = CGFloat.random(in: 0...1)
         let green = CGFloat.random(in: 0...1)
         let blue = CGFloat.random(in: 0...1)
-        let width: CGFloat = CGFloat(Int.random(in: 50...150))
+        let height: CGFloat = CGFloat(Int.random(in: 50...300))
     }
 
     struct ContentView: View {
@@ -96,11 +83,11 @@ extension HMasonryGrid {
         var body: some View {
             Color(red: content.red, green: content.green, blue: content.blue)
                 .opacity(0.6)
-                .frame(width: content.width, height: 35)
+                .frame(height: content.height)
 #if os(iOS)
-                .contentShape(.contextMenuPreview, Capsule())
+                .contentShape(.contextMenuPreview, RoundedRectangle(cornerRadius: 8, style: .continuous))
 #endif
-                .clipShape(Capsule())
+                .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
                 .overlay {
                     Text("\(content.number)")
                 }
@@ -114,8 +101,8 @@ extension HMasonryGrid {
         var body: some View {
             VStack {
                 ScrollView {
-                    HMasonryGrid(items) { data in
-                        data.width
+                    VMasonryGrid(items, numberOfColumns: 3) { data in
+                        data.height
                     } content: { data in
                         ContentView(content: data)
                             .contextMenu {
@@ -145,6 +132,7 @@ extension HMasonryGrid {
                     }
                 }
                 .padding()
+
             }
         }
     }
