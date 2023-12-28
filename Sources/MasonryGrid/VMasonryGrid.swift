@@ -5,6 +5,11 @@
 import SwiftUI
 
 public struct VMasonryGrid<Data, Content>: View where Data: Identifiable & Hashable, Content: View {
+    struct Column {
+        var height: CGFloat = 0
+        var data: [Data] = []
+    }
+
     @State private var heights: [Data: CGFloat] = [:]
 
     @Environment(\.dynamicTypeSize) var dynamicTypeSize
@@ -31,13 +36,15 @@ public struct VMasonryGrid<Data, Content>: View where Data: Identifiable & Hasha
     }
 
     public var body: some View {
+        let columns = calcColumns()
         HStack(alignment: .top, spacing: columnSpacing) {
-            ForEach(calcColumns(), id: \.self) { items in
+            ForEach(columns, id: \.data) { column in
                 LazyVStack(spacing: contentSpacing) {
-                    ForEach(items) { item in
+                    ForEach(column.data) { item in
                         content(item)
                     }
                 }
+                .frame(idealHeight: column.height)
             }
         }
         .frame(maxWidth: .infinity)
@@ -48,22 +55,21 @@ public struct VMasonryGrid<Data, Content>: View where Data: Identifiable & Hasha
 }
 
 extension VMasonryGrid {
-    private func calcColumns() -> [[Data]] {
-        var contents: [[Data]] = [[Data]].init(repeating: [], count: numberOfColumns)
-        var yOffset = [CGFloat].init(repeating: 0, count: numberOfColumns)
+    private func calcColumns() -> [Column] {
+        var columns: [Column] = [Column].init(repeating: .init(), count: numberOfColumns)
 
         for (i, d) in data.enumerated() {
             let contentHeight: CGFloat = heights[d] ?? height(d)
 
-            let column = yOffset.enumerated()
+            let column = columns.map(\.height).enumerated()
                 .min(by: { $0.element < $1.element })?
                 .offset ?? i % numberOfColumns
 
-            contents[column].append(d)
-            yOffset[column] += contentHeight
+            columns[column].data.append(d)
+            columns[column].height += contentHeight
         }
 
-        return contents
+        return columns
     }
 }
 
