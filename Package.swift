@@ -4,7 +4,7 @@ import PackageDescription
 
 let package = Package(
     name: "MasonryGrid",
-    platforms: [.iOS(.v16), .macOS(.v12)],
+    platforms: [.iOS(.v16), .macOS(.v14)],
     products: [
         .library(name: "MasonryGrid", targets: ["MasonryGrid"]),
     ],
