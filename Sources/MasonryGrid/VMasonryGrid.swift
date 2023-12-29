@@ -44,11 +44,9 @@ public struct VMasonryGrid<Data, Content>: View where Data: Identifiable & Hasha
                         content(item)
                     }
                 }
-                .frame(idealHeight: column.height)
             }
         }
-        .frame(maxWidth: .infinity)
-        .onChange(of: dynamicTypeSize) { _ in
+        .onChange(of: dynamicTypeSize) { _, _ in
             heights = [:]
         }
     }
@@ -65,8 +63,8 @@ extension VMasonryGrid {
                 .min(by: { $0.element < $1.element })?
                 .offset ?? i % numberOfColumns
 
+            columns[column].height += columns[column].data.isEmpty ? contentHeight : contentHeight + contentSpacing
             columns[column].data.append(d)
-            columns[column].height += contentHeight
         }
 
         return columns
@@ -101,7 +99,7 @@ extension VMasonryGrid {
     }
 
     struct PreviewView: View {
-        @State var items: [Content] = (0...100).map({ Content(id: UUID(), number: $0) })
+        @State var items: [Content] = (0...500).map({ Content(id: UUID(), number: $0) })
         @Namespace var animation
 
         var body: some View {
