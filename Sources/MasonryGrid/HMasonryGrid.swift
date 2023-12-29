@@ -46,7 +46,6 @@ public struct HMasonryGrid<Data, Content>: View where Data: Identifiable & Hasha
                 .frame(width: row.width)
             }
         }
-        .frame(minWidth: 0, maxWidth: .infinity, alignment: .leading)
         .background(
             Color.clear
                 .frame(height: 0)
