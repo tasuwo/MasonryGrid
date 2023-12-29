@@ -5,6 +5,11 @@
 import SwiftUI
 
 public struct HMasonryGrid<Data, Content>: View where Data: Identifiable & Hashable, Content: View {
+    struct Row {
+        var width: CGFloat = 0
+        var data: [Data] = []
+    }
+
     @State private var availableWidth: CGFloat = 0
     @State private var widths: [Data: CGFloat] = [:]
 
@@ -29,14 +34,16 @@ public struct HMasonryGrid<Data, Content>: View where Data: Identifiable & Hasha
     }
 
     public var body: some View {
+        let rows = calcRows()
         LazyVStack(alignment: .leading, spacing: lineSpacing) {
-            ForEach(calcRows(), id: \.self) { items in
-                LazyHStack(spacing: contentSpacing) {
-                    ForEach(items) { item in
+            ForEach(rows, id: \.data) { row in
+                HStack(spacing: contentSpacing) {
+                    ForEach(row.data) { item in
                         content(item)
                             .frame(maxWidth: availableWidth)
                     }
                 }
+                .frame(width: row.width)
             }
         }
         .frame(minWidth: 0, maxWidth: .infinity, alignment: .leading)
@@ -48,31 +55,35 @@ public struct HMasonryGrid<Data, Content>: View where Data: Identifiable & Hasha
                     availableWidth = frame.width
                 }
         )
-        .onChange(of: dynamicTypeSize) { _ in
+        .onChange(of: dynamicTypeSize) { _, _ in
             widths = [:]
         }
     }
 }
 
 extension HMasonryGrid {
-    private func calcRows() -> [[Data]] {
-        var rows: [[Data]] = [[]]
+    private func calcRows() -> [Row] {
+        var rows: [Row] = []
         var currentRow = 0
-        var remainingWidth = availableWidth
 
         for d in data {
             let contentWidth: CGFloat = widths[d] ?? min(width(d), availableWidth)
-            if rows[currentRow].isEmpty {
-                rows[currentRow].append(d)
-                remainingWidth -= contentWidth
-            } else if remainingWidth - (contentWidth + contentSpacing) >= 0 {
-                rows[currentRow].append(d)
-                remainingWidth -= (contentWidth + contentSpacing)
+
+            if !rows.indices.contains(currentRow) {
+                rows.append(.init())
+            }
+
+            if rows[currentRow].data.isEmpty {
+                rows[currentRow].data.append(d)
+                rows[currentRow].width += contentWidth
+            } else if rows[currentRow].width + contentWidth + contentSpacing <= availableWidth {
+                rows[currentRow].data.append(d)
+                rows[currentRow].width += contentWidth + contentSpacing
             } else {
                 currentRow += 1
-                rows.append([d])
-                remainingWidth = availableWidth
-                remainingWidth -= contentWidth
+                rows.append(.init())
+                rows[currentRow].data.append(d)
+                rows[currentRow].width = contentWidth
             }
         }
 
@@ -108,7 +119,7 @@ extension HMasonryGrid {
     }
 
     struct PreviewView: View {
-        @State var items: [Content] = (0...100).map({ Content(id: UUID(), number: $0) })
+        @State var items: [Content] = (0...500).map({ Content(id: UUID(), number: $0) })
         @Namespace var animation
 
         var body: some View {
