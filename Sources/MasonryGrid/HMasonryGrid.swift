@@ -6,8 +6,14 @@ import SwiftUI
 
 public struct HMasonryGrid<Data, Content>: View where Data: Identifiable & Hashable, Content: View {
     struct Row {
+        struct Item: Identifiable, Hashable {
+            var id: Data.ID { data.id }
+            var width: CGFloat
+            var data: Data
+        }
+
         var width: CGFloat = 0
-        var data: [Data] = []
+        var items: [Item] = []
     }
 
     @State private var availableWidth: CGFloat = 0
@@ -36,10 +42,11 @@ public struct HMasonryGrid<Data, Content>: View where Data: Identifiable & Hasha
     public var body: some View {
         let rows = calcRows()
         LazyVStack(alignment: .leading, spacing: lineSpacing) {
-            ForEach(rows, id: \.data) { row in
+            ForEach(rows, id: \.items) { row in
                 HStack(spacing: contentSpacing) {
-                    ForEach(row.data) { item in
-                        content(item)
+                    ForEach(row.items) { item in
+                        content(item.data)
+                            .frame(width: item.width)
                             .frame(maxWidth: availableWidth)
                     }
                 }
@@ -72,16 +79,16 @@ extension HMasonryGrid {
                 rows.append(.init())
             }
 
-            if rows[currentRow].data.isEmpty {
-                rows[currentRow].data.append(d)
+            if rows[currentRow].items.isEmpty {
+                rows[currentRow].items.append(.init(width: contentWidth, data: d))
                 rows[currentRow].width += contentWidth
             } else if rows[currentRow].width + contentWidth + contentSpacing <= availableWidth {
-                rows[currentRow].data.append(d)
+                rows[currentRow].items.append(.init(width: contentWidth, data: d))
                 rows[currentRow].width += contentWidth + contentSpacing
             } else {
                 currentRow += 1
                 rows.append(.init())
-                rows[currentRow].data.append(d)
+                rows[currentRow].items.append(.init(width: contentWidth, data: d))
                 rows[currentRow].width = contentWidth
             }
         }
