@@ -46,7 +46,7 @@ public struct VMasonryGrid<Data, Content>: View where Data: Identifiable & Hasha
                 }
             }
         }
-        .onChange(of: dynamicTypeSize) { _, _ in
+        .onChange(of: dynamicTypeSize) { _ in
             heights = [:]
         }
     }

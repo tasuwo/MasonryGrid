@@ -54,7 +54,7 @@ public struct HMasonryGrid<Data, Content>: View where Data: Identifiable & Hasha
                     availableWidth = frame.width
                 }
         )
-        .onChange(of: dynamicTypeSize) { _, _ in
+        .onChange(of: dynamicTypeSize) { _ in
             widths = [:]
         }
     }
