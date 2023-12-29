@@ -25,8 +25,8 @@ public struct VMasonryGrid<Data, Content>: View where Data: Identifiable & Hasha
                 numberOfColumns: Int,
                 columnSpacing: CGFloat = 8,
                 contentSpacing: CGFloat = 8,
-                height: @escaping (Data) -> CGFloat,
-                @ViewBuilder content: @escaping (Data) -> Content) {
+                @ViewBuilder content: @escaping (Data) -> Content,
+                height: @escaping (Data) -> CGFloat) {
         self.data = data
         self.numberOfColumns = numberOfColumns
         self.columnSpacing = columnSpacing
@@ -106,8 +106,6 @@ extension VMasonryGrid {
             VStack {
                 ScrollView {
                     VMasonryGrid(items, numberOfColumns: 3) { data in
-                        data.height
-                    } content: { data in
                         ContentView(content: data)
                             .contextMenu {
                                 Button(role: .destructive) {
@@ -122,6 +120,8 @@ extension VMasonryGrid {
                                 print(#"Tapped "\#(data.number)"."#)
                             }
                             .matchedGeometryEffect(id: data.id, in: animation)
+                    } height: { data in
+                        data.height
                     }
                     .padding()
                 }

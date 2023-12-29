@@ -24,8 +24,8 @@ public struct HMasonryGrid<Data, Content>: View where Data: Identifiable & Hasha
     public init(_ data: [Data],
                 lineSpacing: CGFloat = 8,
                 contentSpacing: CGFloat = 8,
-                width: @escaping (Data) -> CGFloat,
-                @ViewBuilder content: @escaping (Data) -> Content) {
+                @ViewBuilder content: @escaping (Data) -> Content,
+                width: @escaping (Data) -> CGFloat) {
         self.data = data
         self.lineSpacing = lineSpacing
         self.contentSpacing = contentSpacing
@@ -125,8 +125,6 @@ extension HMasonryGrid {
             VStack {
                 ScrollView {
                     HMasonryGrid(items) { data in
-                        data.width
-                    } content: { data in
                         ContentView(content: data)
                             .contextMenu {
                                 Button(role: .destructive) {
@@ -141,6 +139,8 @@ extension HMasonryGrid {
                                 print(#"Tapped "\#(data.number)"."#)
                             }
                             .matchedGeometryEffect(id: data.id, in: animation)
+                    } width: { data in
+                        data.width
                     }
                     .padding()
                 }
