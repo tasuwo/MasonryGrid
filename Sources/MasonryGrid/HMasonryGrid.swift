@@ -50,11 +50,10 @@ public struct HMasonryGrid<Data, Content>: View where Data: Identifiable & Hasha
                 HStack(spacing: contentSpacing) {
                     ForEach(row.items) { item in
                         content(item.data)
-                            .frame(width: item.width)
-                            .frame(maxWidth: availableWidth)
+                            .frame(maxWidth: min(item.width, availableWidth))
                     }
                 }
-                .frame(width: row.width)
+                .frame(maxWidth: row.width)
             }
         }
         .background(
@@ -123,7 +122,7 @@ extension HMasonryGrid {
         var body: some View {
             Color(red: content.red, green: content.green, blue: content.blue)
                 .opacity(0.6)
-                .frame(width: content.width, height: 35)
+                .frame(height: 35)
 #if os(iOS)
                 .contentShape(.contextMenuPreview, Capsule())
 #endif
