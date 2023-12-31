@@ -5,16 +5,7 @@
 import SwiftUI
 
 public struct VMasonryGrid<Data, Content>: View where Data: Identifiable & Hashable, Content: View {
-    struct Column {
-        var height: CGFloat = 0
-        var data: [Data] = []
-    }
-
-    class Cache: ObservableObject {
-        var heights: [Data: CGFloat] = [:]
-    }
-
-    @StateObject private var cache: Cache = .init()
+    @StateObject private var coordinator: VMasonryGridCoordinator<Data> = .init()
     @Environment(\.dynamicTypeSize) var dynamicTypeSize
 
     private let data: [Data]
@@ -40,7 +31,11 @@ public struct VMasonryGrid<Data, Content>: View where Data: Identifiable & Hasha
     }
 
     public var body: some View {
-        let columns = calcColumns()
+        let columns = coordinator.onRender(data: data,
+                                           numberOfColumns: numberOfColumns,
+                                           height: height,
+                                           columnSpacing: columnSpacing,
+                                           contentSpacing: contentSpacing)
         HStack(alignment: .top, spacing: columnSpacing) {
             ForEach(columns, id: \.data) { column in
                 LazyVStack(spacing: contentSpacing) {
@@ -51,34 +46,8 @@ public struct VMasonryGrid<Data, Content>: View where Data: Identifiable & Hasha
             }
         }
         .onChange(of: dynamicTypeSize) { _ in
-            cache.heights = [:]
+            coordinator.clearHeightCalculationCache()
         }
-    }
-}
-
-extension VMasonryGrid {
-    private func calcColumns() -> [Column] {
-        var columns = [Column].init(repeating: .init(), count: numberOfColumns)
-
-        for (i, d) in data.enumerated() {
-            let contentHeight: CGFloat
-            if let height = cache.heights[d] {
-                contentHeight = height
-            } else {
-                let calculated = height(d)
-                cache.heights[d] = calculated
-                contentHeight = calculated
-            }
-
-            let column = columns.map(\.height).enumerated()
-                .min(by: { $0.element < $1.element })?
-                .offset ?? i % numberOfColumns
-
-            columns[column].height += columns[column].data.isEmpty ? contentHeight : contentHeight + contentSpacing
-            columns[column].data.append(d)
-        }
-
-        return columns
     }
 }
 
