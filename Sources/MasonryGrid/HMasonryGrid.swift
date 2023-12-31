@@ -135,7 +135,7 @@ extension HMasonryGrid {
     }
 
     struct PreviewView: View {
-        @State var items: [Content] = (0...500).map({ Content(id: UUID(), number: $0) })
+        @State var items: [Content] = (0...1000).map({ Content(id: UUID(), number: $0) })
         @Namespace var animation
 
         var body: some View {
