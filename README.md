@@ -59,6 +59,29 @@ VMasonryGrid(items, numberOfColumns: 3) { item in
 }
 ```
 
+### Frame tracking mode (HMasonryGrid only)
+
+HMasonryGrid requires recalculation every time the display area (frame) changes. When there are a large number of items, this calculation can be expensive and cause performance issues. Especially on macOS, where the window size can be freely changed, such problems are more likely to occur.
+
+HMasonryGrid provides different operation modes (`FrameTrackingMode`) to avoid this issue:
+
+- `immediate`: Performs calculation immediately every time the frame changes. This mode has the highest rendering cost.
+- `backgroundCalculation`: Run calculation in the background thread when the frame changes and immediately reflects the calculation result.
+- `debounce`: Delays the calculation using the debounce algorithm to monitor frame changes.
+
+By default, `backgroundCalculation` is selected. Please choose the appropriate mode based on the number of items to display.
+
+You can set `FrameTrackingMode` as follows.
+
+``` swift
+HMasonryGrid(items) { item in
+    ItemView(item)
+} width: { item in
+    item.width
+}
+.environment(\.frameTrackingMode, .debounce(0.15))
+```
+
 ## License
 
 The MasonryGrid is released under the MIT License. See the [LICENSE](LICENSE.md) file for more information.

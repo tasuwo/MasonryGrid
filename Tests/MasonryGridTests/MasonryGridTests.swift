@@ -1,5 +1,5 @@
-import XCTest
 @testable import MasonryGrid
+import XCTest
 
 final class MasonryGridTests: XCTestCase {
     func testExample() throws {

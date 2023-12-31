@@ -5,25 +5,10 @@
 import SwiftUI
 
 public struct HMasonryGrid<Data, Content>: View where Data: Identifiable & Hashable, Content: View {
-    struct Row {
-        struct Item: Identifiable, Hashable {
-            var id: Data.ID { data.id }
-            var width: CGFloat
-            var data: Data
-        }
-
-        var width: CGFloat = 0
-        var items: [Item] = []
-    }
-
-    class Cache: ObservableObject {
-        var widths: [Data: CGFloat] = [:]
-    }
-
     @State private var availableWidth: CGFloat = 0
-    @StateObject private var cache: Cache = .init()
-
+    @StateObject private var coordinator: HMasonryGridCoordinator<Data> = .init()
     @Environment(\.dynamicTypeSize) var dynamicTypeSize
+    @Environment(\.frameTrackingMode) var frameTrackingMode
 
     private var data: [Data]
     private let width: (Data) -> CGFloat
@@ -35,7 +20,8 @@ public struct HMasonryGrid<Data, Content>: View where Data: Identifiable & Hasha
                 lineSpacing: CGFloat = 8,
                 contentSpacing: CGFloat = 8,
                 @ViewBuilder content: @escaping (Data) -> Content,
-                width: @escaping (Data) -> CGFloat) {
+                width: @escaping (Data) -> CGFloat)
+    {
         self.data = data
         self.lineSpacing = lineSpacing
         self.contentSpacing = contentSpacing
@@ -44,7 +30,11 @@ public struct HMasonryGrid<Data, Content>: View where Data: Identifiable & Hasha
     }
 
     public var body: some View {
-        let rows = calcRows()
+        let rows = coordinator.onRender(data: data,
+                                        width: width,
+                                        lineSpacing: lineSpacing,
+                                        contentSpacing: contentSpacing,
+                                        frameWidth: availableWidth)
         LazyVStack(alignment: .leading, spacing: lineSpacing) {
             ForEach(rows, id: \.items) { row in
                 HStack(spacing: contentSpacing) {
@@ -61,48 +51,18 @@ public struct HMasonryGrid<Data, Content>: View where Data: Identifiable & Hasha
                 .frame(height: 0)
                 .onChangeFrame { frame in
                     availableWidth = frame.width
+                    coordinator.onChangeFrame(frame)
                 }
         )
+        .onAppear {
+            coordinator.setFrameTrackingMode(frameTrackingMode)
+        }
         .onChange(of: dynamicTypeSize) { _ in
-            cache.widths = [:]
+            coordinator.clearWidthCalculationCache()
         }
-    }
-}
-
-extension HMasonryGrid {
-    private func calcRows() -> [Row] {
-        var rows: [Row] = []
-        var currentRow = 0
-
-        for d in data {
-            let contentWidth: CGFloat
-            if let width = cache.widths[d] {
-                contentWidth = width
-            } else {
-                let calculated = width(d)
-                cache.widths[d] = calculated
-                contentWidth = min(calculated, availableWidth)
-            }
-
-            if !rows.indices.contains(currentRow) {
-                rows.append(.init())
-            }
-
-            if rows[currentRow].items.isEmpty {
-                rows[currentRow].items.append(.init(width: contentWidth, data: d))
-                rows[currentRow].width += contentWidth
-            } else if rows[currentRow].width + contentWidth + contentSpacing <= availableWidth {
-                rows[currentRow].items.append(.init(width: contentWidth, data: d))
-                rows[currentRow].width += contentWidth + contentSpacing
-            } else {
-                currentRow += 1
-                rows.append(.init())
-                rows[currentRow].items.append(.init(width: contentWidth, data: d))
-                rows[currentRow].width = contentWidth
-            }
+        .onChange(of: frameTrackingMode) { newValue in
+            coordinator.setFrameTrackingMode(newValue)
         }
-
-        return rows
     }
 }
 
@@ -110,10 +70,10 @@ extension HMasonryGrid {
     struct Content: Identifiable, Hashable {
         let id: UUID
         let number: Int
-        let red = CGFloat.random(in: 0...1)
-        let green = CGFloat.random(in: 0...1)
-        let blue = CGFloat.random(in: 0...1)
-        let width: CGFloat = CGFloat(Int.random(in: 50...150))
+        let red = CGFloat.random(in: 0 ... 1)
+        let green = CGFloat.random(in: 0 ... 1)
+        let blue = CGFloat.random(in: 0 ... 1)
+        let width: CGFloat = .init(Int.random(in: 50 ... 150))
     }
 
     struct ContentView: View {
@@ -123,9 +83,9 @@ extension HMasonryGrid {
             Color(red: content.red, green: content.green, blue: content.blue)
                 .opacity(0.6)
                 .frame(height: 35)
-#if os(iOS)
+            #if os(iOS)
                 .contentShape(.contextMenuPreview, Capsule())
-#endif
+            #endif
                 .clipShape(Capsule())
                 .overlay {
                     Text("\(content.number)")
@@ -134,7 +94,7 @@ extension HMasonryGrid {
     }
 
     struct PreviewView: View {
-        @State var items: [Content] = (0...1000).map({ Content(id: UUID(), number: $0) })
+        @State var items: [Content] = (0 ... 1000).map({ Content(id: UUID(), number: $0) })
         @Namespace var animation
 
         var body: some View {

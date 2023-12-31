@@ -29,7 +29,8 @@ public struct VMasonryGrid<Data, Content>: View where Data: Identifiable & Hasha
                 columnSpacing: CGFloat = 8,
                 contentSpacing: CGFloat = 8,
                 @ViewBuilder content: @escaping (Data) -> Content,
-                height: @escaping (Data) -> CGFloat) {
+                height: @escaping (Data) -> CGFloat)
+    {
         self.data = data
         self.numberOfColumns = numberOfColumns
         self.columnSpacing = columnSpacing
@@ -57,7 +58,7 @@ public struct VMasonryGrid<Data, Content>: View where Data: Identifiable & Hasha
 
 extension VMasonryGrid {
     private func calcColumns() -> [Column] {
-        var columns: [Column] = [Column].init(repeating: .init(), count: numberOfColumns)
+        var columns = [Column].init(repeating: .init(), count: numberOfColumns)
 
         for (i, d) in data.enumerated() {
             let contentHeight: CGFloat
@@ -85,10 +86,10 @@ extension VMasonryGrid {
     struct Content: Identifiable, Hashable {
         let id: UUID
         let number: Int
-        let red = CGFloat.random(in: 0...1)
-        let green = CGFloat.random(in: 0...1)
-        let blue = CGFloat.random(in: 0...1)
-        let height: CGFloat = CGFloat(Int.random(in: 50...300))
+        let red = CGFloat.random(in: 0 ... 1)
+        let green = CGFloat.random(in: 0 ... 1)
+        let blue = CGFloat.random(in: 0 ... 1)
+        let height: CGFloat = .init(Int.random(in: 50 ... 300))
     }
 
     struct ContentView: View {
@@ -98,9 +99,9 @@ extension VMasonryGrid {
             Color(red: content.red, green: content.green, blue: content.blue)
                 .opacity(0.6)
                 .frame(height: content.height)
-#if os(iOS)
+            #if os(iOS)
                 .contentShape(.contextMenuPreview, RoundedRectangle(cornerRadius: 8, style: .continuous))
-#endif
+            #endif
                 .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
                 .overlay {
                     Text("\(content.number)")
@@ -109,7 +110,7 @@ extension VMasonryGrid {
     }
 
     struct PreviewView: View {
-        @State var items: [Content] = (0...1000).map({ Content(id: UUID(), number: $0) })
+        @State var items: [Content] = (0 ... 1000).map({ Content(id: UUID(), number: $0) })
         @Namespace var animation
 
         var body: some View {
@@ -146,7 +147,6 @@ extension VMasonryGrid {
                     }
                 }
                 .padding()
-
             }
         }
     }
