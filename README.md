@@ -46,7 +46,7 @@ VMasonryGrid(items, numberOfColumns: 3) { item in
 
 ### Animation
 
-Use [matchedGeometryEffect](https://developer.apple.com/documentation/swiftui/view/matchedgeometryeffect(id:in:properties:anchor:issource:)) if you want to animate items when they are updated.
+Use [matchedGeometryEffect](https://developer.apple.com/documentation/swiftui/view/matchedgeometryeffect(id:in:properties:anchor:issource:)) and update items in [withAnimation](https://developer.apple.com/documentation/swiftui/withanimation(_:_:)) block if you want to animate items when they are updated.
 
 ```swift
 @Namespace var animation
@@ -57,9 +57,15 @@ VMasonryGrid(items, numberOfColumns: 3) { item in
 } height: { item in
     item.height
 }
+
+withAnimation {
+    items.append(/* new item */)
+}
 ```
 
-### Frame tracking mode (HMasonryGrid only)
+Currently, there is no support for animating changes in spacing, number of columns, or layout updates due to changes in the display area.
+
+### FrameTrackingMode (HMasonryGrid only)
 
 HMasonryGrid requires recalculation every time the display area (frame) changes. When there are a large number of items, this calculation can be expensive and cause performance issues. Especially on macOS, where the window size can be freely changed, such problems are more likely to occur.
 
