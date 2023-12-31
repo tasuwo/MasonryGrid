@@ -10,8 +10,11 @@ public struct VMasonryGrid<Data, Content>: View where Data: Identifiable & Hasha
         var data: [Data] = []
     }
 
-    @State private var heights: [Data: CGFloat] = [:]
+    class Cache: ObservableObject {
+        var heights: [Data: CGFloat] = [:]
+    }
 
+    @StateObject private var cache: Cache = .init()
     @Environment(\.dynamicTypeSize) var dynamicTypeSize
 
     private let data: [Data]
@@ -47,7 +50,7 @@ public struct VMasonryGrid<Data, Content>: View where Data: Identifiable & Hasha
             }
         }
         .onChange(of: dynamicTypeSize) { _ in
-            heights = [:]
+            cache.heights = [:]
         }
     }
 }
@@ -57,7 +60,14 @@ extension VMasonryGrid {
         var columns: [Column] = [Column].init(repeating: .init(), count: numberOfColumns)
 
         for (i, d) in data.enumerated() {
-            let contentHeight: CGFloat = heights[d] ?? height(d)
+            let contentHeight: CGFloat
+            if let height = cache.heights[d] {
+                contentHeight = height
+            } else {
+                let calculated = height(d)
+                cache.heights[d] = calculated
+                contentHeight = calculated
+            }
 
             let column = columns.map(\.height).enumerated()
                 .min(by: { $0.element < $1.element })?

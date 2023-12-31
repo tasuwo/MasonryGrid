@@ -16,8 +16,12 @@ public struct HMasonryGrid<Data, Content>: View where Data: Identifiable & Hasha
         var items: [Item] = []
     }
 
+    class Cache: ObservableObject {
+        var widths: [Data: CGFloat] = [:]
+    }
+
     @State private var availableWidth: CGFloat = 0
-    @State private var widths: [Data: CGFloat] = [:]
+    @StateObject private var cache: Cache = .init()
 
     @Environment(\.dynamicTypeSize) var dynamicTypeSize
 
@@ -57,12 +61,11 @@ public struct HMasonryGrid<Data, Content>: View where Data: Identifiable & Hasha
             Color.clear
                 .frame(height: 0)
                 .onChangeFrame { frame in
-                    widths = [:]
                     availableWidth = frame.width
                 }
         )
         .onChange(of: dynamicTypeSize) { _ in
-            widths = [:]
+            cache.widths = [:]
         }
     }
 }
@@ -73,7 +76,14 @@ extension HMasonryGrid {
         var currentRow = 0
 
         for d in data {
-            let contentWidth: CGFloat = widths[d] ?? min(width(d), availableWidth)
+            let contentWidth: CGFloat
+            if let width = cache.widths[d] {
+                contentWidth = width
+            } else {
+                let calculated = width(d)
+                cache.widths[d] = calculated
+                contentWidth = min(calculated, availableWidth)
+            }
 
             if !rows.indices.contains(currentRow) {
                 rows.append(.init())
