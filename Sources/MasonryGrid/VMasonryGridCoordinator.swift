@@ -22,7 +22,7 @@ final class VMasonryGridCoordinator<Data: Identifiable & Hashable>: ObservableOb
             if data != newRequest.data {
                 return .immediatedly
             } else if columnSpacing != newRequest.columnSpacing || contentSpacing != newRequest.contentSpacing || numberOfColumns != newRequest.numberOfColumns {
-                return .delay
+                return .immediatedly
             } else {
                 return nil
             }
